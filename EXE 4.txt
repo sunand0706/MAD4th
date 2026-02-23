@@ -1,0 +1,202 @@
+ACTIVITY_MAIN.XML
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Electricity Bill Calculator"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="24dp"/>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Consumer Name"
+            android:layout_marginBottom="12dp">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etConsumerName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPersonName"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Consumer Number"
+            android:layout_marginBottom="12dp">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etConsumerNumber"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Units Consumed"
+            android:layout_marginBottom="16dp">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etUnits"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <Button
+            android:id="@+id/btnCalculate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Generate Bill"
+            android:layout_marginBottom="24dp"/>
+
+        <androidx.cardview.widget.CardView
+            android:id="@+id/cardResult"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+                <TextView
+                    android:id="@+id/tvBillOutput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="16sp"
+                    android:textColor="#333333"
+                    android:lineSpacingExtra="4dp"/>
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+    </LinearLayout>
+</ScrollView>
+
+MAINaCTIVITY.JAVA
+
+package com.example.raw;
+
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.cardview.widget.CardView;
+import com.google.android.material.textfield.TextInputEditText;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
+public class MainActivity extends AppCompatActivity {
+
+    private TextInputEditText etConsumerName, etConsumerNumber, etUnits;
+    private Button btnCalculate;
+    private CardView cardResult;
+    private TextView tvBillOutput;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        etConsumerName = findViewById(R.id.etConsumerName);
+        etConsumerNumber = findViewById(R.id.etConsumerNumber);
+        etUnits = findViewById(R.id.etUnits);
+        btnCalculate = findViewById(R.id.btnCalculate);
+        cardResult = findViewById(R.id.cardResult);
+        tvBillOutput = findViewById(R.id.tvBillOutput);
+
+        btnCalculate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                generateBill();
+            }
+        });
+    }
+
+    private void generateBill() {
+        String name = etConsumerName.getText().toString().trim();
+        String number = etConsumerNumber.getText().toString().trim();
+        String unitsStr = etUnits.getText().toString().trim();
+
+        if (name.isEmpty() || number.isEmpty() || unitsStr.isEmpty()) {
+            Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        double units = Double.parseDouble(unitsStr);
+        double totalAmount = calculateAmount(units);
+
+        String date = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss", Locale.getDefault()).format(new Date());
+
+        StringBuilder bill = new StringBuilder();
+        bill.append("ELECTRICITY BILL RECEIPT\n");
+        bill.append("-------------------------------------------\n");
+        bill.append("Date: ").append(date).append("\n");
+        bill.append("Consumer Name: ").append(name).append("\n");
+        bill.append("Consumer ID: ").append(number).append("\n");
+        bill.append("Units Consumed: ").append(units).append("\n");
+        bill.append("-------------------------------------------\n");
+        bill.append("Tariff Breakdown:\n");
+        
+        if (units <= 100) {
+            bill.append("0-100 units: Free\n");
+        } else if (units <= 200) {
+            bill.append("First 100: Free\n");
+            bill.append("Next ").append(units - 100).append(" units @ ₹2.25\n");
+        } else if (units <= 500) {
+            bill.append("First 100: Free\n");
+            bill.append("Next 100 units @ ₹2.25\n");
+            bill.append("Remaining ").append(units - 200).append(" units @ ₹4.50\n");
+        } else {
+            bill.append("First 100: Free\n");
+            bill.append("Next 100 units @ ₹2.25\n");
+            bill.append("Next 300 units @ ₹4.50\n");
+            bill.append("Above 500 units: @ ₹6.00\n");
+        }
+
+        bill.append("-------------------------------------------\n");
+        bill.append("TOTAL AMOUNT: ₹").append(String.format("%.2f", totalAmount)).append("\n");
+        bill.append("-------------------------------------------\n");
+        bill.append("Thank you for paying on time!");
+
+        tvBillOutput.setText(bill.toString());
+        cardResult.setVisibility(View.VISIBLE);
+    }
+
+    private double calculateAmount(double units) {
+        double billAmount = 0;
+
+        if (units <= 100) {
+            billAmount = 0;
+        } else if (units <= 200) {
+            billAmount = (units - 100) * 2.25;
+        } else if (units <= 500) {
+            billAmount = (100 * 2.25) + (units - 200) * 4.50;
+        } else {
+            billAmount = (100 * 2.25) + (300 * 4.50) + (units - 500) * 6.00;
+        }
+
+        // Adding a fixed service charge
+        if (units > 0) {
+            billAmount += 30; // Fixed charge of 30
+        }
+
+        return billAmount;
+    }
+}
